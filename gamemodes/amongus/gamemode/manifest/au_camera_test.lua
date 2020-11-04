@@ -1,0 +1,5 @@
+return {
+	Tasks = {
+		"swipeCard"
+	}
+}
