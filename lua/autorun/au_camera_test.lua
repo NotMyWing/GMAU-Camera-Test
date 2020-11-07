@@ -5,27 +5,32 @@ if SERVER then
 		if ent:GetName() == "cameraTest" then
 			-- This isn't particularly nice, I know.
 			-- I just don't have any fancy wrappers yet.
-			local playerTable = GAMEMODE.GameData.Lookup_PlayerByEntity[playerTable]
+			local playerTable = GAMEMODE.GameData.Lookup_PlayerByEntity[ply]
 			if not playerTable then
 				return
 			end
 
 			local cameraPoint = ents.FindByName("cameraTestTarget")[1]
 
-			if GAMEMODE:Player_OpenVGUI(playerTable, "cameraTest") then
-				net.Start("CameraTest Open")
-				net.WriteVector(cameraPoint:GetPos())
-				net.WriteAngle(cameraPoint:GetAngles())
-				net.Send(ply)
-			end
+			local payload = {
+				cameraData = {
+					position = cameraPoint:GetPos(),
+					angle = cameraPoint:GetAngles()
+				}
+			}
+			GAMEMODE:Player_OpenVGUI(playerTable, "cameraTest", payload) 
 		end
 	end)
 else
 	local noop = function() end
 
-	net.Receive("CameraTest Open", function()
-		local position = net.ReadVector()
-		local angle = net.ReadAngle()
+	hook.Add("GMAU OpenVGUI", "CameraTest Open", function(payload)
+		if not payload.cameraData then
+			return
+		end
+
+		local position = payload.cameraData.position
+		local angle = payload.cameraData.angle
 
 		local base = vgui.Create("AmongUsVGUIBase")
 		local panel = vgui.Create("DPanel")
@@ -63,5 +68,7 @@ else
 		base:Popup()
 
 		GAMEMODE:HUD_OpenVGUI(base)
+
+		return true
 	end)
 end
